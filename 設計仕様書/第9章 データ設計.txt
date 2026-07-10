@@ -133,15 +133,15 @@ runSimulation()の戻り値をそのまま画面状態として保持する。
 
 |項目名|型|説明|初期値|
 |---|---|---|---|
-|selectedTaxType|string|税方式トグルで選択中の税方式（separate／income）|separate|
+|selectedTaxType|string|税方式トグルで選択中の税方式（separate／income）|separate（画面初期表示時のみ。シミュレーション実行時は9.6.4のとおり自動決定する）|
 
 ### 9.6.4 ライフサイクル
 
 |タイミング|処理|
 |---|---|
-|画面初期表示|初期値"separate"を設定する|
+|画面初期表示|初期値"separate"を設定する（税金計算ブロックは非表示のため実質未使用）|
+|シミュレーション実行時（新規・再実行を問わず）|InputState.interestTypeに応じてselectedTaxTypeを自動設定する（Ver.1.7）。interestType="simple"の場合は"separate"、interestType="compound"の場合は"income"とする（第6章 6.4.6.1参照）|
 |税方式トグル操作時|selectedTaxTypeのみ更新する。SimulationResultの再計算・再取得は行わない|
-|シミュレーション再実行時|selectedTaxTypeの値は維持する|
 |リセットボタン押下時|初期値"separate"へ戻す|
 
 ---

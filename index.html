@@ -82,8 +82,8 @@
       <div class="field">
         <label for="interestType">運用方法</label>
         <select id="interestType" name="interestType">
-          <option value="compound">複利</option>
           <option value="simple">単利</option>
+          <option value="compound">複利</option>
         </select>
       </div>
 
@@ -112,7 +112,7 @@
       <h2>税金計算</h2>
       <div class="toggle-group" id="taxTypeToggle" role="group">
         <button type="button" class="toggle-btn is-active" data-tax-type="separate">源泉分離課税</button>
-        <button type="button" class="toggle-btn" data-tax-type="income">所得税方式</button>
+        <button type="button" class="toggle-btn" data-tax-type="income">一時所得に掛かる税金概算</button>
       </div>
       <dl class="result-grid">
         <dt>税額</dt><dd id="resultTax">-</dd>

@@ -1,7 +1,7 @@
 // 第12章 12.13 定数モジュール（マスタ値）
 export const TAX_TYPES = [
   { code: "separate", name: "源泉分離課税" },
-  { code: "income", name: "所得税方式" },
+  { code: "income", name: "一時所得に掛かる税金概算" },
 ];
 
 // 第10章 10.15 源泉分離課税

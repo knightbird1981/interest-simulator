@@ -237,16 +237,25 @@ el.form.addEventListener("submit", (e) => {
 
   simulationResult = result;
   lastRunStartYearMonth = inputState.startYearMonth;
+
+  // 第6章 6.4.6.1：運用方法に応じて税方式トグルの初期選択を自動決定する
+  displayState.selectedTaxType = inputState.interestType === "compound" ? "income" : "separate";
+  updateTaxTypeToggleUI();
+
   renderResult();
 });
 
 // ---- 第6章 6.4.6 税方式切替コントロール ----
+function updateTaxTypeToggleUI() {
+  const buttons = el.taxTypeToggle.querySelectorAll(".toggle-btn");
+  buttons.forEach((b) => b.classList.toggle("is-active", b.dataset.taxType === displayState.selectedTaxType));
+}
+
 el.taxTypeToggle.addEventListener("click", (e) => {
   const btn = e.target.closest(".toggle-btn");
   if (!btn) return;
   displayState.selectedTaxType = btn.dataset.taxType;
-  const buttons = el.taxTypeToggle.querySelectorAll(".toggle-btn");
-  buttons.forEach((b) => b.classList.toggle("is-active", b === btn));
+  updateTaxTypeToggleUI();
   if (simulationResult) {
     renderTaxSection();
     renderYearlyTable(simulationResult.yearlyData);
@@ -281,6 +290,9 @@ function renderResult() {
   renderTaxSection();
   renderAssetChart(el.assetChart, yearlyData, lastRunStartYearMonth, displayState.selectedTaxType);
   renderYearlyTable(yearlyData);
+
+  // 第6章 6.4.13：シミュレーション結果ブロック先頭へオートスクロール
+  el.resultSection.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function renderYearlyTable(yearlyData) {
@@ -320,8 +332,7 @@ el.resetButton.addEventListener("click", () => {
   el.yearlySection.hidden = true;
   el.disclaimerSection.hidden = true;
 
-  const buttons = el.taxTypeToggle.querySelectorAll(".toggle-btn");
-  buttons.forEach((b) => b.classList.toggle("is-active", b.dataset.taxType === "separate"));
+  updateTaxTypeToggleUI();
 });
 
 // ---- 初期表示 ----
