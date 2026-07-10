@@ -52,7 +52,7 @@
   "investmentYearsInput": 20,
   "startYearMonth": "2026-07",
   "contributionFrequency": "monthly",
-  "interestType": "compound"
+  "interestType": "simple"
 }
 
 periodInputModeの値にかかわらず、birthDate・maturityAge・investmentYearsInputはすべて保持する（7.3.4 モード切替時の値保持を参照）。非選択側の値は画面上は非表示となるが、InputStateからは削除しない。

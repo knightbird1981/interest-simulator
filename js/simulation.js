@@ -2,7 +2,6 @@
 import {
   SEPARATE_TAX_RATE,
   REVIVAL_TAX_RATE,
-  INCOME_RESIDENT_TAX_RATE,
   SPECIAL_DEDUCTION_MAX,
   INCOME_TAX_BRACKETS,
 } from "./constants.js";
@@ -45,11 +44,10 @@ function calcTaxIncome(profit) {
   // ② 課税対象額
   const taxableAmount = Math.floor(occasionalIncome / 2);
 
-  // ③ 税額計算
+  // ③ 税額計算（住民税は含めない。源泉分離課税と同じ2税目構成に統一。第10章10.17参照）
   const incomeTax = calcIncomeTaxAmount(taxableAmount);
   const revivalTax = Math.floor(taxableAmount * REVIVAL_TAX_RATE);
-  const residentTax = Math.floor(taxableAmount * INCOME_RESIDENT_TAX_RATE);
-  const tax = incomeTax + revivalTax + residentTax;
+  const tax = incomeTax + revivalTax;
 
   return { tax, afterTax: profit - tax };
 }

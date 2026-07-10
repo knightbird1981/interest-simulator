@@ -82,7 +82,7 @@ function defaultInputState() {
     investmentYearsInput: INPUT_LIMITS.investmentYearsInput.default,
     startYearMonth: currentYearMonthStr(),
     contributionFrequency: "monthly",
-    interestType: "compound",
+    interestType: "simple",
   };
 }
 
@@ -291,8 +291,22 @@ function renderResult() {
   renderAssetChart(el.assetChart, yearlyData, lastRunStartYearMonth, displayState.selectedTaxType);
   renderYearlyTable(yearlyData);
 
-  // 第6章 6.4.13：シミュレーション結果ブロック先頭へオートスクロール
-  el.resultSection.scrollIntoView({ behavior: "smooth", block: "start" });
+  scrollToResult();
+}
+
+// 第6章 6.4.13：シミュレーション結果ブロック先頭へオートスクロール
+// スマートフォンでは直前のフォーカス（仮想キーボード表示中）が残ったままだと
+// キーボードが閉じる際のビューポート変化にスクロール位置がずれるため、
+// フォーカスを外してレイアウトが確定してから（2フレーム後）スクロールする。
+function scrollToResult() {
+  if (document.activeElement instanceof HTMLElement) {
+    document.activeElement.blur();
+  }
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      el.resultSection.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
 }
 
 function renderYearlyTable(yearlyData) {

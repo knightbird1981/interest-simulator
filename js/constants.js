@@ -10,9 +10,6 @@ export const SEPARATE_TAX_RATE = 0.20315;
 // 第10章 10.14 復興特別所得税率（共通定数）
 export const REVIVAL_TAX_RATE = 0.00315;
 
-// 第10章 10.17 所得税方式：住民税率
-export const INCOME_RESIDENT_TAX_RATE = 0.10;
-
 // 第10章 10.16 特別控除額（最高50万円）
 export const SPECIAL_DEDUCTION_MAX = 500000;
 
