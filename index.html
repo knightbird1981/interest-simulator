@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>積立運用シミュレーター</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div class="app">
+  <header class="app-header">
+    <h1>積立運用シミュレーター</h1>
+  </header>
+
+  <p class="disclaimer-top">本ツールの計算結果は簡易シミュレーションであり、税務相談・税額の保証を行うものではありません。</p>
+
+  <form id="simulationForm" novalidate>
+    <section class="card">
+      <h2>シミュレーション条件</h2>
+
+      <div class="field">
+        <label for="initialAmount">初期資産（円）</label>
+        <input type="text" inputmode="numeric" id="initialAmount" name="initialAmount" />
+        <p class="error-message" data-error-for="initialAmount"></p>
+      </div>
+
+      <div class="field">
+        <label for="monthlyAmount">毎月積立額（円）</label>
+        <input type="text" inputmode="numeric" id="monthlyAmount" name="monthlyAmount" />
+        <p class="error-message" data-error-for="monthlyAmount"></p>
+      </div>
+
+      <div class="field">
+        <label for="annualRate">想定年利（%）</label>
+        <input type="text" inputmode="decimal" id="annualRate" name="annualRate" />
+        <p class="error-message" data-error-for="annualRate"></p>
+      </div>
+
+      <div class="field">
+        <label>運用期間入力モード</label>
+        <div class="toggle-group" id="periodInputModeToggle" role="group">
+          <button type="button" class="toggle-btn is-active" data-mode="birthDate">①生年月日から算出</button>
+          <button type="button" class="toggle-btn" data-mode="years">②運用期間から算出</button>
+        </div>
+        <p class="error-message" data-error-for="periodInputMode"></p>
+      </div>
+
+      <div class="field-group" id="modeBirthDateFields">
+        <div class="field">
+          <label for="birthDate">生年月日</label>
+          <input type="date" id="birthDate" name="birthDate" />
+          <p class="error-message" data-error-for="birthDate"></p>
+        </div>
+        <div class="field">
+          <label for="maturityAge">満期年齢（歳）</label>
+          <input type="text" inputmode="numeric" id="maturityAge" name="maturityAge" />
+          <p class="error-message" data-error-for="maturityAge"></p>
+        </div>
+      </div>
+
+      <div class="field-group" id="modeYearsFields" hidden>
+        <div class="field">
+          <label for="investmentYearsInput">運用期間（年）</label>
+          <input type="text" inputmode="numeric" id="investmentYearsInput" name="investmentYearsInput" />
+          <p class="error-message" data-error-for="investmentYearsInput"></p>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="startYearMonth">積立開始年月</label>
+        <input type="month" id="startYearMonth" name="startYearMonth" />
+        <p class="error-message" data-error-for="startYearMonth"></p>
+      </div>
+
+      <div class="field">
+        <label for="contributionFrequency">積立頻度</label>
+        <select id="contributionFrequency" name="contributionFrequency">
+          <option value="monthly">毎月</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="interestType">運用方法</label>
+        <select id="interestType" name="interestType">
+          <option value="compound">複利</option>
+        </select>
+      </div>
+
+      <div class="field derived-field">
+        <label>運用期間（自動算出）</label>
+        <p id="investmentPeriodDisplay" class="derived-value">−</p>
+      </div>
+
+      <div class="actions">
+        <button type="submit" id="runButton">シミュレーション</button>
+        <button type="button" id="resetButton">リセット</button>
+      </div>
+    </section>
+
+    <section class="card" id="resultSection" hidden>
+      <h2>シミュレーション結果</h2>
+      <dl class="result-grid">
+        <dt>最終資産</dt><dd id="resultBalance">-</dd>
+        <dt>元本</dt><dd id="resultPrincipal">-</dd>
+        <dt>運用益</dt><dd id="resultProfit">-</dd>
+        <dt>利益率</dt><dd id="resultProfitRate">-</dd>
+      </dl>
+    </section>
+
+    <section class="card" id="taxSection" hidden>
+      <h2>税金計算</h2>
+      <div class="toggle-group" id="taxTypeToggle" role="group">
+        <button type="button" class="toggle-btn is-active" data-tax-type="separate">源泉分離課税</button>
+        <button type="button" class="toggle-btn" data-tax-type="income">所得税方式</button>
+      </div>
+      <dl class="result-grid">
+        <dt>税額</dt><dd id="resultTax">-</dd>
+        <dt>手取り利益</dt><dd id="resultAfterTax">-</dd>
+      </dl>
+    </section>
+
+    <section class="card" id="graphSection" hidden>
+      <h2>資産推移グラフ</h2>
+      <canvas id="assetChart" height="280"></canvas>
+    </section>
+
+    <section class="card" id="yearlySection" hidden>
+      <h2>年次推移一覧</h2>
+      <div class="table-wrap">
+        <table id="yearlyTable">
+          <thead>
+            <tr>
+              <th>年</th>
+              <th>元本</th>
+              <th>評価額</th>
+              <th>利益</th>
+              <th>税額</th>
+              <th>手取り利益</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card disclaimer-bottom" id="disclaimerSection" hidden>
+      <ul>
+        <li>実際の税額は、その年の給与所得・事業所得、雑所得などの所得と合算されるため異なります。</li>
+        <li>表示される運用結果は入力条件に基づく試算であり、将来の運用成果を保証するものではありません。実際の運用成績は市場動向等により変動します。</li>
+        <li>税額の計算は本ツール作成時点の税制（税率・控除額等）に基づいています。税制改正により将来の税額が変わる場合があります。</li>
+        <li>所得税方式の税額は、本シミュレーションの利益のみを一時所得として単体計算した金額です。実際は他の一時所得や所得控除の状況により税額が変動します。</li>
+      </ul>
+    </section>
+  </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

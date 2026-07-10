@@ -1,0 +1,203 @@
+# 第9章 データ設計
+
+## 9.1 目的
+
+本章では、本システムが実行時に保持するデータの構造とライフサイクルを定義する。
+
+本システムは第4章で定義したとおりサーバー・データベースを持たないフロントエンド完結型（静的サイト）である。そのため、本章でいう「データ設計」はデータベース設計ではなく、**ブラウザのメモリ上で保持する画面状態（UI State）とモジュール間で受け渡すデータ構造**を対象とする。
+
+---
+
+## 9.2 データ永続化方針
+
+|項目|方針|
+|---|---|
+|永続化|行わない（Ver.1.0） |
+|保存先|なし（localStorage・Cookie・サーバー保存のいずれも使用しない）|
+|データの生存期間|画面を開いてから閉じる・再読み込みするまで|
+|再読み込み時の挙動|入力項目は初期値に戻る（第7章で定義した初期値を使用） |
+
+将来、入力条件や結果の保存機能を追加する場合は、第1章 1.7の版数ルールに従いマイナーバージョンとして本章を改訂する。
+
+---
+
+## 9.3 データの分類
+
+本システムが扱うデータは以下の4種類に分類する。
+
+|分類|内容|保持場所|
+|---|---|---|
+|入力状態（InputState）|利用者が入力中のシミュレーション条件|画面(UI)のメモリ|
+|自動算出状態（DerivedState）|生年月日・満期年齢・積立開始年月から算出する満期年月・運用期間（投資月数）|画面(UI)のメモリ|
+|計算結果（SimulationResult）|runSimulation()の戻り値|画面(UI)のメモリ|
+|表示状態（DisplayState）|税方式トグルの選択状態等、計算結果を再計算せずに表示へ反映するための状態|画面(UI)のメモリ|
+
+---
+
+## 9.4 入力状態（InputState）
+
+### 9.4.1 概要
+
+第7章で定義した入力項目の現在値を保持する状態。
+
+### 9.4.2 データ構造
+
+{
+  "initialAmount": 0,
+  "monthlyAmount": 30000,
+  "annualRate": 5.0,
+  "periodInputMode": "birthDate",
+  "birthDate": "",
+  "maturityAge": 65,
+  "investmentYearsInput": 20,
+  "startYearMonth": "2026-07",
+  "contributionFrequency": "monthly",
+  "interestType": "compound"
+}
+
+periodInputModeの値にかかわらず、birthDate・maturityAge・investmentYearsInputはすべて保持する（7.3.4 モード切替時の値保持を参照）。非選択側の値は画面上は非表示となるが、InputStateからは削除しない。
+
+### 9.4.3 項目
+
+各項目の型・初期値・制約は第7章「入力項目設計」を正とする。本章では重複定義を行わない。
+
+### 9.4.4 自動算出項目（DerivedState）
+
+periodInputModeおよび関連項目の変更のたびに、以下を再計算し画面へ即時反映する（第6章 6.4.8、第10章 10.5参照）。InputStateとは別に保持する。
+
+{
+  "maturityYearMonth": "2055-05",
+  "investmentMonths": 346
+}
+
+|項目名|型|説明|
+|---|---|---|
+|maturityYearMonth|string|満期年月（YYYY-MM）。periodInputMode = years の場合は使用しない（nullとする）|
+|investmentMonths|number|運用期間（投資月数）。1未満の場合はシミュレーション実行を抑止する|
+
+再計算のトリガーはperiodInputModeの値により異なる。
+
+|periodInputMode|再計算トリガー|算出方法|
+|---|---|---|
+|birthDate（①）|生年月日・満期年齢・積立開始年月のいずれかの変更|第10章 10.5.2〜10.5.3（満期年月からの月数算出）|
+|years（②）|運用期間（年）の変更|第10章 10.5.5（investmentYearsInput×12）|
+
+### 9.4.5 ライフサイクル
+
+|タイミング|処理|
+|---|---|
+|画面初期表示|第7章で定義した初期値を設定する（periodInputMode=birthDate、生年月日は未入力）|
+|利用者入力時|該当項目のみ更新する。DerivedStateの再計算トリガーとなる項目の変更時はDerivedStateも再計算する|
+|運用期間入力モード切替時|periodInputModeのみ更新する。birthDate・maturityAge・investmentYearsInputの値は保持したまま、DerivedStateを新モードの算出方法で再計算する|
+|リセットボタン押下時|初期値へ全項目を戻す（DerivedStateも再計算する）|
+|シミュレーション実行時|バリデーション（第8章）を通過した値とDerivedState.investmentMonthsをrunSimulation()の引数（第12章 12.5）へ変換する|
+
+---
+
+## 9.5 計算結果（SimulationResult）
+
+### 9.5.1 概要
+
+runSimulation()の戻り値をそのまま画面状態として保持する。
+
+### 9.5.2 データ構造
+
+第12章 12.7〜12.10で定義したsummary・monthlyData・yearlyData・taxComparisonから構成される。本章では構造の重複定義を行わず、第12章を正とする。
+
+### 9.5.3 ライフサイクル
+
+|タイミング|処理|
+|---|---|
+|シミュレーション未実行時|存在しない（null） |
+|シミュレーション実行成功時|戻り値オブジェクトで置き換える|
+|シミュレーション実行失敗時|直前の結果を保持したまま、エラーメッセージのみ表示する（第8章 8.6のエラー表示仕様に準ずる）|
+|リセットボタン押下時|nullに戻し、結果表示ブロックを非表示にする|
+
+計算結果は表示用に再計算しない（第10章 10.25参照）。画面はSimulationResultを唯一の参照元とする。
+
+---
+
+## 9.6 表示状態（DisplayState）
+
+### 9.6.1 概要
+
+計算結果のうち、どのデータを画面へ表示するかを制御する状態。計算処理には影響しない。
+
+### 9.6.2 データ構造
+
+{
+  "selectedTaxType": "separate"
+}
+
+### 9.6.3 項目
+
+|項目名|型|説明|初期値|
+|---|---|---|---|
+|selectedTaxType|string|税方式トグルで選択中の税方式（separate／income）|separate|
+
+### 9.6.4 ライフサイクル
+
+|タイミング|処理|
+|---|---|
+|画面初期表示|初期値"separate"を設定する|
+|税方式トグル操作時|selectedTaxTypeのみ更新する。SimulationResultの再計算・再取得は行わない|
+|シミュレーション再実行時|selectedTaxTypeの値は維持する|
+|リセットボタン押下時|初期値"separate"へ戻す|
+
+---
+
+## 9.7 状態間の関係
+
+```text
+InputState（入力状態）
+    │
+    │ 生年月日・満期年齢・積立開始年月の変更のたび自動再計算
+    ▼
+DerivedState（満期年月・運用期間）
+    │
+    │ シミュレーション実行（第12章 runSimulation。investmentMonthsを渡す）
+    ▼
+SimulationResult（計算結果）
+    │
+    │ 税方式トグル操作（再計算なし）
+    ▼
+DisplayState.selectedTaxType により表示内容を決定
+    │
+    ▼
+画面表示（第6章）
+```
+
+---
+
+## 9.8 データ整合性
+
+|確認項目|内容|
+|---|---|
+|InputStateとバリデーション|画面表示中のInputStateは常に第8章のバリデーション結果と整合していること|
+|DerivedStateの整合性|DerivedStateは常にInputState.periodInputModeで選択中のモードの算出方法・関連項目から再計算した値であること。古い値やモード切替前の算出方法の結果を保持したままシミュレーションを実行しないこと|
+|SimulationResultの不変性|一度生成したSimulationResultは、次回のシミュレーション実行まで変更しないこと|
+|DisplayStateとSimulationResultの整合|selectedTaxTypeの値は、SimulationResult.taxComparison内に存在するtaxTypeのいずれかと一致すること|
+
+---
+
+## 9.9 他章との関連
+
+|章|関連内容|
+|---|---|
+|第6章|画面設計（状態を反映するUI要素）|
+|第7章|入力項目設計（InputStateの項目定義）|
+|第8章|バリデーション設計|
+|第10章|計算ロジック設計（SimulationResultの生成元）|
+|第11章|グラフ設計（monthlyData／yearlyDataの利用方法）|
+|第12章|処理インターフェース設計（SimulationResultの正式なデータ形式）|
+
+---
+
+## 9.10 本章で定義する必須ルール
+
+- 入力条件・計算結果は永続化しないこと（Ver.1.0）
+- 運用期間（investmentMonths）は利用者の直接入力とせず、DerivedStateとして自動算出すること
+- 運用期間入力モード切替時は、非選択側の入力値を破棄しないこと
+- 非表示項目（選択されていないモードの項目）はバリデーション・計算処理の対象外とすること
+- 税方式トグルの切替はDisplayStateの更新のみとし、SimulationResultを再計算しないこと
+- SimulationResultの構造は第12章の定義と重複させず、常に第12章を正とすること
