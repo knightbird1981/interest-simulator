@@ -227,6 +227,7 @@ el.form.addEventListener("submit", (e) => {
     monthlyAmount: inputState.monthlyAmount,
     annualRate: inputState.annualRate / 100,
     investmentMonths: derivedState.investmentMonths,
+    interestType: inputState.interestType,
   });
 
   if (result.error) {

@@ -95,7 +95,8 @@ runSimulation(input)
   "initialAmount": 100000,
   "monthlyAmount": 30000,
   "annualRate": 0.05,
-  "investmentMonths": 346
+  "investmentMonths": 346,
+  "interestType": "compound"
 }
 
 ---
@@ -108,6 +109,7 @@ runSimulation(input)
 |monthlyAmount|number|○|毎月積立額|
 |annualRate|number|○|想定年利|
 |investmentMonths|number|○|運用期間（投資月数）。生年月日・満期年齢・積立開始年月からUI側（画面）で算出した値を渡す（第9章 9.4.4、第10章 10.5参照）|
+|interestType|string|○|運用方法。"compound"（複利）または"simple"（単利）（第7章 7.3.10、第10章 10.4.1参照）。利用者が選択した1方式のみを計算する。税方式のような両方式同時算出は行わない|
 
 ※税方式（taxType）は計算結果に対する表示切替のみに使用するため、本関数の引数には含めない（第10章 10.3、第7章 7.6参照）。表示切替の選択状態はUI側（画面）で保持する。
 
@@ -527,6 +529,7 @@ runSimulation() 呼び出し
 - 金額計算結果は円未満切り捨てとする
 - 画面(UI)層は計算処理を直接実装せず、計算ロジックモジュールを呼び出す
 - runSimulation()は税方式を引数として受け取らず、両税方式の結果を常に返却すること
+- runSimulation()は運用方法（interestType）を引数として受け取り、選択された1方式のみを計算すること（両方式の同時算出は行わない）
 - 計算結果は月次・年次データとして取得可能にする
 - 税方式比較結果（taxComparison）を取得可能にする
 - 税方式の表示切替では再計算を行わないこと

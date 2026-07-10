@@ -7,9 +7,14 @@ import {
   INCOME_TAX_BRACKETS,
 } from "./constants.js";
 
-// 10.6 実効月利の計算
-function calcMonthlyRate(annualRate) {
+// 10.6.1 複利の場合：実効月利の計算
+function calcMonthlyRateCompound(annualRate) {
   return Math.pow(1 + annualRate, 1 / 12) - 1;
+}
+
+// 10.6.2 単利の場合：月利の計算
+function calcMonthlyRateSimple(annualRate) {
+  return annualRate / 12;
 }
 
 // 10.15 源泉分離課税
@@ -55,7 +60,7 @@ function makeError(code, message) {
 
 // 第12章 12.4 シミュレーション実行関数
 export function runSimulation(input) {
-  const { initialAmount, monthlyAmount, annualRate, investmentMonths } = input;
+  const { initialAmount, monthlyAmount, annualRate, investmentMonths, interestType } = input;
 
   // 12.12 入力値エラー処理
   if (initialAmount == null || isNaN(initialAmount) || initialAmount < 0) {
@@ -71,10 +76,13 @@ export function runSimulation(input) {
     return makeError("INVALID_PARAMETER", "運用期間が1ヶ月未満です。");
   }
 
-  const monthlyRate = calcMonthlyRate(annualRate);
+  // 10.4.1：運用方法は選択された1方式のみを計算する（両方式の同時算出は行わない）
+  const isSimple = interestType === "simple";
+  const monthlyRate = isSimple ? calcMonthlyRateSimple(annualRate) : calcMonthlyRateCompound(annualRate);
 
   let balance = initialAmount;
   let principal = initialAmount;
+  let accumulatedInterest = 0; // 10.7.2：単利の場合のみ使用（利息に利息を付さないための累積管理）
 
   const monthlyData = [];
   const yearlyData = [];
@@ -82,10 +90,18 @@ export function runSimulation(input) {
   for (let month = 1; month <= investmentMonths; month++) {
     // 10.8 積立処理順序：積立 → 利息計算 → 評価額更新
     principal += monthlyAmount;
-    balance += monthlyAmount;
 
-    const interest = Math.floor(balance * monthlyRate);
-    balance += interest;
+    let interest;
+    if (isSimple) {
+      // 10.9.2：元本のみに利息が発生する
+      interest = Math.floor(principal * monthlyRate);
+      accumulatedInterest += interest;
+      balance = principal + accumulatedInterest;
+    } else {
+      balance += monthlyAmount;
+      interest = Math.floor(balance * monthlyRate);
+      balance += interest;
+    }
 
     const profit = balance - principal;
 
