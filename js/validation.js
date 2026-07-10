@@ -16,7 +16,7 @@ export const ERROR_MESSAGES = {
   "VAL-011": "想定年利は0〜100%で入力してください。",
   "VAL-012": "運用期間の入力方法を選択してください。",
   "VAL-013": "生年月日を入力してください。",
-  "VAL-014": "生年月日には未来の日付や現実的でない日付は入力できません。",
+  "VAL-014": "生年月日はYYYYMMDD形式（8桁の数字）で、実在する日付を入力してください。未来の日付は入力できません。",
   "VAL-015": "満期年齢を入力してください。",
   "VAL-016": "満期年齢は数値で入力してください。",
   "VAL-017": "満期年齢は1〜120歳で入力してください。",
@@ -43,6 +43,17 @@ function isInteger(value) {
 
 function isNumber(value) {
   return typeof value === "number" && Number.isFinite(value);
+}
+
+// 第8章 8.3.6：生年月日（YYYYMMDD、8桁数字）の形式・実在日チェック
+function isValidYyyymmdd(value) {
+  if (typeof value !== "string" || !/^\d{8}$/.test(value)) return false;
+  const year = Number(value.slice(0, 4));
+  const month = Number(value.slice(4, 6));
+  const day = Number(value.slice(6, 8));
+  if (month < 1 || month > 12) return false;
+  const daysInMonth = new Date(year, month, 0).getDate();
+  return day >= 1 && day <= daysInMonth;
 }
 
 // 第8章 8.2 バリデーション一覧 / 8.3 共通バリデーション
@@ -93,6 +104,8 @@ export function validate(inputState, todayStr) {
     // birthDate VAL-013〜014
     if (isEmpty(inputState.birthDate)) {
       errors.birthDate = err("VAL-013");
+    } else if (!isValidYyyymmdd(inputState.birthDate)) {
+      errors.birthDate = err("VAL-014");
     } else if (inputState.birthDate > todayStr) {
       errors.birthDate = err("VAL-014");
     } else if (calcAgeAtDate(inputState.birthDate, todayStr) > INPUT_LIMITS.birthDateMaxAgeYears) {

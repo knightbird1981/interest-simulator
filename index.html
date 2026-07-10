@@ -47,8 +47,8 @@
 
       <div class="field-group" id="modeBirthDateFields">
         <div class="field">
-          <label for="birthDate">生年月日</label>
-          <input type="date" id="birthDate" name="birthDate" />
+          <label for="birthDate">生年月日（例：19900515）</label>
+          <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="19900515" id="birthDate" name="birthDate" />
           <p class="error-message" data-error-for="birthDate"></p>
         </div>
         <div class="field">

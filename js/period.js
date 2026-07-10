@@ -5,8 +5,11 @@ function parseYearMonth(yearMonthStr) {
   return { year, month };
 }
 
+// 第7章 7.3.5：生年月日はYYYYMMDD（8桁数字、区切り文字なし）で保持する
 function parseDate(dateStr) {
-  const [year, month, day] = dateStr.split("-").map(Number);
+  const year = Number(dateStr.slice(0, 4));
+  const month = Number(dateStr.slice(4, 6));
+  const day = Number(dateStr.slice(6, 8));
   return { year, month, day };
 }
 
@@ -63,11 +66,11 @@ export function calcAgeAtYearMonth(birthDate, yearMonthStr) {
 
 // 8.3.6 生年月日の妥当性チェックで使用する年齢算出（日付精度、システム日付基準）
 export function calcAgeAtDate(birthDate, targetDateStr) {
-  const birth = new Date(birthDate);
-  const target = new Date(targetDateStr);
-  let age = target.getFullYear() - birth.getFullYear();
-  const monthDiff = target.getMonth() - birth.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && target.getDate() < birth.getDate())) {
+  const birth = parseDate(birthDate);
+  const target = parseDate(targetDateStr);
+  let age = target.year - birth.year;
+  const monthDiff = target.month - birth.month;
+  if (monthDiff < 0 || (monthDiff === 0 && target.day < birth.day)) {
     age -= 1;
   }
   return age;

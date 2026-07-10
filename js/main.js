@@ -43,9 +43,10 @@ const el = {
 };
 
 // ---- ユーティリティ ----
+// 生年月日（YYYYMMDD、8桁数字）との比較に使うため同じ形式で返す
 function todayStr() {
   const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
 }
 
 function currentYearMonthStr() {
@@ -160,6 +161,11 @@ function updateDerivedState() {
   }
   el.investmentPeriodDisplay.textContent = formatInvestmentMonths(derivedState.investmentMonths);
 }
+
+// 第7章 7.3.5：生年月日は数字以外を自動除去し最大8桁に制限する
+el.birthDate.addEventListener("input", () => {
+  el.birthDate.value = el.birthDate.value.replace(/\D/g, "").slice(0, 8);
+});
 
 [el.birthDate, el.maturityAge, el.startYearMonth, el.investmentYearsInput].forEach((input) => {
   input.addEventListener("input", () => {
@@ -318,6 +324,5 @@ el.resetButton.addEventListener("click", () => {
 });
 
 // ---- 初期表示 ----
-el.birthDate.max = todayStr(); // 8.3.6 日付妥当性チェック：未来日付を許容しない
 renderInputStateToDom();
 updateDerivedState();
