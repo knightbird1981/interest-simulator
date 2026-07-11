@@ -33,6 +33,7 @@ const el = {
   taxTypeToggle: document.getElementById("taxTypeToggle"),
   taxSingleView: document.getElementById("taxSingleView"),
   taxCompareView: document.getElementById("taxCompareView"),
+  taxIncomeCaution: document.getElementById("taxIncomeCaution"),
   resultBalance: document.getElementById("resultBalance"),
   resultPrincipal: document.getElementById("resultPrincipal"),
   resultProfit: document.getElementById("resultProfit"),
@@ -283,6 +284,7 @@ function renderTaxSection() {
   }
   el.taxSingleView.hidden = false;
   el.taxCompareView.hidden = true;
+  el.taxIncomeCaution.hidden = displayState.selectedTaxType !== "income";
 
   const entry = simulationResult.taxComparison.find(
     (t) => t.taxType === displayState.selectedTaxType
@@ -296,6 +298,7 @@ function renderTaxSection() {
 function renderTaxCompareView() {
   el.taxSingleView.hidden = true;
   el.taxCompareView.hidden = false;
+  el.taxIncomeCaution.hidden = true;
 
   const sep = simulationResult.taxComparison.find((t) => t.taxType === "separate");
   const inc = simulationResult.taxComparison.find((t) => t.taxType === "income");
@@ -384,6 +387,7 @@ el.resetButton.addEventListener("click", () => {
   el.disclaimerSection.hidden = true;
   el.taxSingleView.hidden = false;
   el.taxCompareView.hidden = true;
+  el.taxIncomeCaution.hidden = true;
 
   updateTaxTypeToggleUI();
 });

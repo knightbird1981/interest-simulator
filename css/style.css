@@ -225,6 +225,12 @@ body {
   font-weight: 700;
 }
 
+.tax-note {
+  margin: 10px 0 0;
+  font-size: 0.8rem;
+  color: var(--color-warning-text);
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
