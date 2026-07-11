@@ -220,10 +220,9 @@ body {
   overflow-x: auto;
 }
 
-.compare-note {
-  margin: 10px 0 0;
-  font-size: 0.8rem;
-  color: var(--color-muted);
+.diff-highlight {
+  color: var(--color-error);
+  font-weight: 700;
 }
 
 table {

@@ -44,7 +44,6 @@ const el = {
   compareTaxDiff: document.getElementById("compareTaxDiff"),
   compareAfterTaxSeparate: document.getElementById("compareAfterTaxSeparate"),
   compareAfterTaxIncome: document.getElementById("compareAfterTaxIncome"),
-  compareAfterTaxDiff: document.getElementById("compareAfterTaxDiff"),
   yearlyTableBody: document.querySelector("#yearlyTable tbody"),
   assetChart: document.getElementById("assetChart"),
 };
@@ -71,13 +70,6 @@ function toNumber(rawValue) {
 
 function formatCurrency(value) {
   return `${Math.round(value).toLocaleString()}円`;
-}
-
-// 差額表示用：正の値には+を付与する
-function formatSignedCurrency(value) {
-  const rounded = Math.round(value);
-  const sign = rounded > 0 ? "+" : "";
-  return `${sign}${rounded.toLocaleString()}円`;
 }
 
 function formatPercent(value) {
@@ -299,7 +291,8 @@ function renderTaxSection() {
   el.resultAfterTax.textContent = formatCurrency(entry.afterTaxProfit);
 }
 
-// 第6章 6.4.6.2：税方式「比較」表示（差額＝源泉分離課税－一時所得に掛かる税金概算）
+// 第6章 6.4.6.2：税方式「比較」表示
+// 差額は税額・手取り利益で絶対値が同一のため、税額行にのみ符号なしで表示する
 function renderTaxCompareView() {
   el.taxSingleView.hidden = true;
   el.taxCompareView.hidden = false;
@@ -309,11 +302,10 @@ function renderTaxCompareView() {
 
   el.compareTaxSeparate.textContent = formatCurrency(sep.tax);
   el.compareTaxIncome.textContent = formatCurrency(inc.tax);
-  el.compareTaxDiff.textContent = formatSignedCurrency(sep.tax - inc.tax);
+  el.compareTaxDiff.textContent = formatCurrency(Math.abs(sep.tax - inc.tax));
 
   el.compareAfterTaxSeparate.textContent = formatCurrency(sep.afterTaxProfit);
   el.compareAfterTaxIncome.textContent = formatCurrency(inc.afterTaxProfit);
-  el.compareAfterTaxDiff.textContent = formatSignedCurrency(sep.afterTaxProfit - inc.afterTaxProfit);
 }
 
 // ---- 結果表示（第6章 6.4.5、第11章 グラフ設計） ----
