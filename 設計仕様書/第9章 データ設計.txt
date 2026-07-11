@@ -51,7 +51,6 @@
   "maturityAge": 65,
   "investmentYearsInput": 20,
   "startYearMonth": "2026-07",
-  "contributionFrequency": "monthly",
   "interestType": "simple"
 }
 
@@ -126,23 +125,26 @@ runSimulation()の戻り値をそのまま画面状態として保持する。
 ### 9.6.2 データ構造
 
 {
-  "selectedTaxType": "separate"
+  "selectedTaxType": "separate",
+  "lastConcreteTaxType": "separate"
 }
 
 ### 9.6.3 項目
 
 |項目名|型|説明|初期値|
 |---|---|---|---|
-|selectedTaxType|string|税方式トグルで選択中の税方式（separate／income）|separate（画面初期表示時のみ。シミュレーション実行時は9.6.4のとおり自動決定する）|
+|selectedTaxType|string|税方式トグルで選択中の表示モード（separate／income／compare。compareはVer.1.9追加）|separate（画面初期表示時のみ。シミュレーション実行時は9.6.4のとおり自動決定する）|
+|lastConcreteTaxType|string|直前に選択されていた実税方式（separate／income。compareは含まない）。グラフ・年次一覧の表示に使用する（Ver.1.9追加、第11章参照）|separate|
 
 ### 9.6.4 ライフサイクル
 
 |タイミング|処理|
 |---|---|
-|画面初期表示|初期値"separate"を設定する（税金計算ブロックは非表示のため実質未使用）|
-|シミュレーション実行時（新規・再実行を問わず）|InputState.interestTypeに応じてselectedTaxTypeを自動設定する（Ver.1.7）。interestType="simple"の場合は"separate"、interestType="compound"の場合は"income"とする（第6章 6.4.6.1参照）|
-|税方式トグル操作時|selectedTaxTypeのみ更新する。SimulationResultの再計算・再取得は行わない|
-|リセットボタン押下時|初期値"separate"へ戻す|
+|画面初期表示|selectedTaxType・lastConcreteTaxTypeともに初期値"separate"を設定する（税金計算ブロックは非表示のため実質未使用）|
+|シミュレーション実行時（新規・再実行を問わず）|InputState.interestTypeに応じてselectedTaxType・lastConcreteTaxTypeを同時に自動設定する（Ver.1.7）。interestType="simple"の場合は"separate"、interestType="compound"の場合は"income"とする（第6章 6.4.6.1参照）|
+|税方式トグル操作時（separate／income選択時）|selectedTaxType・lastConcreteTaxTypeを両方とも選択値に更新する。SimulationResultの再計算・再取得は行わない|
+|税方式トグル操作時（compare選択時）|selectedTaxTypeのみ"compare"に更新する。lastConcreteTaxTypeは変更しない（第6章 6.4.6.2参照）|
+|リセットボタン押下時|selectedTaxType・lastConcreteTaxTypeともに初期値"separate"へ戻す|
 
 ---
 
@@ -176,7 +178,7 @@ DisplayState.selectedTaxType により表示内容を決定
 |InputStateとバリデーション|画面表示中のInputStateは常に第8章のバリデーション結果と整合していること|
 |DerivedStateの整合性|DerivedStateは常にInputState.periodInputModeで選択中のモードの算出方法・関連項目から再計算した値であること。古い値やモード切替前の算出方法の結果を保持したままシミュレーションを実行しないこと|
 |SimulationResultの不変性|一度生成したSimulationResultは、次回のシミュレーション実行まで変更しないこと|
-|DisplayStateとSimulationResultの整合|selectedTaxTypeの値は、SimulationResult.taxComparison内に存在するtaxTypeのいずれかと一致すること|
+|DisplayStateとSimulationResultの整合|lastConcreteTaxTypeの値は、SimulationResult.taxComparison内に存在するtaxTypeのいずれかと一致すること。selectedTaxTypeは上記に加えて"compare"を取り得る|
 
 ---
 

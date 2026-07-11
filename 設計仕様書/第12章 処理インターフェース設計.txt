@@ -106,7 +106,7 @@ runSimulation(input)
 |項目名|型|必須|説明|
 |---|---|---|---|
 |initialAmount|number|○|初期投資額|
-|monthlyAmount|number|○|毎月積立額|
+|monthlyAmount|number|○|積立額（Ver.1.9より表示名変更。旧「毎月積立額」）|
 |annualRate|number|○|想定年利|
 |investmentMonths|number|○|運用期間（投資月数）。生年月日・満期年齢・積立開始年月からUI側（画面）で算出した値を渡す（第9章 9.4.4、第10章 10.5参照）|
 |interestType|string|○|運用方法。"compound"（複利）または"simple"（単利）（第7章 7.3.10、第10章 10.4.1参照）。利用者が選択した1方式のみを計算する。税方式のような両方式同時算出は行わない|

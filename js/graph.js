@@ -14,14 +14,14 @@ function calcCalendarYearLabels(yearlyData, startYearMonth) {
   return yearlyData.map((d) => `${startYear + d.year - 1}年`);
 }
 
-// 11.4.4 系列（データセット）：元本(+)、利益(+)、税額(-)
+// 11.4.4 系列（データセット）：元本(+)、手取り利益(+)、税額(+)。すべてプラス方向に積み上げる（Ver.1.9）
 export function renderAssetChart(canvasEl, yearlyData, startYearMonth, selectedTaxType) {
   const labels = calcCalendarYearLabels(yearlyData, startYearMonth);
   const principalSeries = yearlyData.map((d) => d.principal);
-  const profitSeries = yearlyData.map((d) => d.profit);
   const taxSeries = yearlyData.map((d) =>
-    selectedTaxType === "separate" ? -d.taxSeparate : -d.taxIncome
+    selectedTaxType === "separate" ? d.taxSeparate : d.taxIncome
   );
+  const afterTaxProfitSeries = yearlyData.map((d, i) => d.profit - taxSeries[i]);
 
   if (chartInstance) {
     chartInstance.destroy();
@@ -39,8 +39,8 @@ export function renderAssetChart(canvasEl, yearlyData, startYearMonth, selectedT
           stack: "asset",
         },
         {
-          label: "利益",
-          data: profitSeries,
+          label: `手取り利益（${taxTypeName(selectedTaxType)}）`,
+          data: afterTaxProfitSeries,
           backgroundColor: "#7c3aed",
           stack: "asset",
         },

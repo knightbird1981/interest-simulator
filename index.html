@@ -19,13 +19,13 @@
       <h2>シミュレーション条件</h2>
 
       <div class="field">
-        <label for="initialAmount">初期資産（円）</label>
+        <label for="initialAmount">一時金運用（円）</label>
         <input type="text" inputmode="numeric" id="initialAmount" name="initialAmount" />
         <p class="error-message" data-error-for="initialAmount"></p>
       </div>
 
       <div class="field">
-        <label for="monthlyAmount">毎月積立額（円）</label>
+        <label for="monthlyAmount">積立額（円）</label>
         <input type="text" inputmode="numeric" id="monthlyAmount" name="monthlyAmount" />
         <p class="error-message" data-error-for="monthlyAmount"></p>
       </div>
@@ -73,13 +73,6 @@
       </div>
 
       <div class="field">
-        <label for="contributionFrequency">積立頻度</label>
-        <select id="contributionFrequency" name="contributionFrequency">
-          <option value="monthly">毎月</option>
-        </select>
-      </div>
-
-      <div class="field">
         <label for="interestType">運用方法</label>
         <select id="interestType" name="interestType">
           <option value="simple">単利</option>
@@ -113,11 +106,39 @@
       <div class="toggle-group" id="taxTypeToggle" role="group">
         <button type="button" class="toggle-btn is-active" data-tax-type="separate">源泉分離課税</button>
         <button type="button" class="toggle-btn" data-tax-type="income">一時所得に掛かる税金概算</button>
+        <button type="button" class="toggle-btn" data-tax-type="compare">比較</button>
       </div>
-      <dl class="result-grid">
+      <dl class="result-grid" id="taxSingleView">
         <dt>税額</dt><dd id="resultTax">-</dd>
         <dt>手取り利益</dt><dd id="resultAfterTax">-</dd>
       </dl>
+      <div class="table-wrap" id="taxCompareView" hidden>
+        <table id="taxCompareTable">
+          <thead>
+            <tr>
+              <th></th>
+              <th>源泉分離課税</th>
+              <th>一時所得に掛かる税金概算</th>
+              <th>差額</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th>税額</th>
+              <td id="compareTaxSeparate">-</td>
+              <td id="compareTaxIncome">-</td>
+              <td id="compareTaxDiff">-</td>
+            </tr>
+            <tr>
+              <th>手取り利益</th>
+              <td id="compareAfterTaxSeparate">-</td>
+              <td id="compareAfterTaxIncome">-</td>
+              <td id="compareAfterTaxDiff">-</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="compare-note">差額＝源泉分離課税－一時所得に掛かる税金概算（＋は源泉分離課税の方が大きいことを示す）</p>
+      </div>
     </section>
 
     <section class="card" id="graphSection" hidden>

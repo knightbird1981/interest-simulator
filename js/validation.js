@@ -3,14 +3,14 @@ import { INPUT_LIMITS } from "./constants.js";
 import { calcAgeAtYearMonth, calcAgeAtDate } from "./period.js";
 
 export const ERROR_MESSAGES = {
-  "VAL-001": "初期資産を入力してください。",
-  "VAL-002": "初期資産は数値で入力してください。",
-  "VAL-003": "初期資産は0円以上を入力してください。",
-  "VAL-004": "初期資産が上限を超えています。",
-  "VAL-005": "毎月積立額を入力してください。",
-  "VAL-006": "毎月積立額は数値で入力してください。",
-  "VAL-007": "毎月積立額は0円以上を入力してください。",
-  "VAL-008": "毎月積立額が上限を超えています。",
+  "VAL-001": "一時金運用を入力してください。",
+  "VAL-002": "一時金運用は数値で入力してください。",
+  "VAL-003": "一時金運用は0円以上を入力してください。",
+  "VAL-004": "一時金運用が上限を超えています。",
+  "VAL-005": "積立額を入力してください。",
+  "VAL-006": "積立額は数値で入力してください。",
+  "VAL-007": "積立額は0円以上を入力してください。",
+  "VAL-008": "積立額が上限を超えています。",
   "VAL-009": "想定年利を入力してください。",
   "VAL-010": "想定年利は数値で入力してください。",
   "VAL-011": "想定年利は0〜100%で入力してください。",
@@ -24,7 +24,7 @@ export const ERROR_MESSAGES = {
   "VAL-019": "運用期間は数値で入力してください。",
   "VAL-020": "運用期間は1〜100年で入力してください。",
   "VAL-021": "積立開始年月を入力してください。",
-  "VAL-022": "積立頻度を選択してください。",
+  // VAL-022は欠番（Ver.1.9で積立頻度項目を削除。番号は振り直さない）
   "VAL-023": "運用方法を選択してください。",
   "VAL-024": "満期年齢は、積立開始年月時点の年齢より大きい値を入力してください。",
 };
@@ -152,11 +152,6 @@ export function validate(inputState, todayStr) {
   // startYearMonth VAL-021（両モード共通）
   if (isEmpty(inputState.startYearMonth)) {
     errors.startYearMonth = err("VAL-021");
-  }
-
-  // contributionFrequency VAL-022
-  if (isEmpty(inputState.contributionFrequency)) {
-    errors.contributionFrequency = err("VAL-022");
   }
 
   // interestType VAL-023

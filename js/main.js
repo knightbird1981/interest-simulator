@@ -22,7 +22,6 @@ const el = {
   maturityAge: document.getElementById("maturityAge"),
   investmentYearsInput: document.getElementById("investmentYearsInput"),
   startYearMonth: document.getElementById("startYearMonth"),
-  contributionFrequency: document.getElementById("contributionFrequency"),
   interestType: document.getElementById("interestType"),
   investmentPeriodDisplay: document.getElementById("investmentPeriodDisplay"),
   resetButton: document.getElementById("resetButton"),
@@ -32,12 +31,20 @@ const el = {
   yearlySection: document.getElementById("yearlySection"),
   disclaimerSection: document.getElementById("disclaimerSection"),
   taxTypeToggle: document.getElementById("taxTypeToggle"),
+  taxSingleView: document.getElementById("taxSingleView"),
+  taxCompareView: document.getElementById("taxCompareView"),
   resultBalance: document.getElementById("resultBalance"),
   resultPrincipal: document.getElementById("resultPrincipal"),
   resultProfit: document.getElementById("resultProfit"),
   resultProfitRate: document.getElementById("resultProfitRate"),
   resultTax: document.getElementById("resultTax"),
   resultAfterTax: document.getElementById("resultAfterTax"),
+  compareTaxSeparate: document.getElementById("compareTaxSeparate"),
+  compareTaxIncome: document.getElementById("compareTaxIncome"),
+  compareTaxDiff: document.getElementById("compareTaxDiff"),
+  compareAfterTaxSeparate: document.getElementById("compareAfterTaxSeparate"),
+  compareAfterTaxIncome: document.getElementById("compareAfterTaxIncome"),
+  compareAfterTaxDiff: document.getElementById("compareAfterTaxDiff"),
   yearlyTableBody: document.querySelector("#yearlyTable tbody"),
   assetChart: document.getElementById("assetChart"),
 };
@@ -66,6 +73,13 @@ function formatCurrency(value) {
   return `${Math.round(value).toLocaleString()}円`;
 }
 
+// 差額表示用：正の値には+を付与する
+function formatSignedCurrency(value) {
+  const rounded = Math.round(value);
+  const sign = rounded > 0 ? "+" : "";
+  return `${sign}${rounded.toLocaleString()}円`;
+}
+
 function formatPercent(value) {
   return `${value.toFixed(2)}%`;
 }
@@ -81,7 +95,6 @@ function defaultInputState() {
     maturityAge: INPUT_LIMITS.maturityAge.default,
     investmentYearsInput: INPUT_LIMITS.investmentYearsInput.default,
     startYearMonth: currentYearMonthStr(),
-    contributionFrequency: "monthly",
     interestType: "simple",
   };
 }
@@ -90,7 +103,11 @@ function defaultInputState() {
 let inputState = defaultInputState();
 let derivedState = { maturityYearMonth: null, investmentMonths: null };
 let simulationResult = null; // 第9章 9.5 SimulationResult
-let displayState = { selectedTaxType: "separate" }; // 第9章 9.6 DisplayState
+// 第9章 9.6 DisplayState
+// selectedTaxType: "separate"|"income"|"compare"（比較モード、Ver.1.9追加）
+// lastConcreteTaxType: グラフ・年次一覧は特定1税方式を前提とするため、
+//   compareモード中も直前に選択されていた実税方式（separate/income）を保持し、そちらを使用する
+let displayState = { selectedTaxType: "separate", lastConcreteTaxType: "separate" };
 let lastRunStartYearMonth = null; // 直近のシミュレーション実行時点の積立開始年月（グラフの暦年ラベル算出用）
 
 // ---- InputStateをDOMへ反映 ----
@@ -102,7 +119,6 @@ function renderInputStateToDom() {
   el.maturityAge.value = inputState.maturityAge;
   el.investmentYearsInput.value = inputState.investmentYearsInput;
   el.startYearMonth.value = inputState.startYearMonth;
-  el.contributionFrequency.value = inputState.contributionFrequency;
   el.interestType.value = inputState.interestType;
 
   updateModeToggleUI();
@@ -110,14 +126,14 @@ function renderInputStateToDom() {
 
 // ---- DOMからInputStateを読み取る ----
 function readInputStateFromDom() {
-  inputState.initialAmount = toNumber(el.initialAmount.value);
-  inputState.monthlyAmount = toNumber(el.monthlyAmount.value);
+  // 第7章 7.3.1・7.3.2：空欄の場合は自動的に0を設定する
+  inputState.initialAmount = toNumber(el.initialAmount.value) ?? 0;
+  inputState.monthlyAmount = toNumber(el.monthlyAmount.value) ?? 0;
   inputState.annualRate = toNumber(el.annualRate.value);
   inputState.birthDate = el.birthDate.value;
   inputState.maturityAge = toNumber(el.maturityAge.value);
   inputState.investmentYearsInput = toNumber(el.investmentYearsInput.value);
   inputState.startYearMonth = el.startYearMonth.value;
-  inputState.contributionFrequency = el.contributionFrequency.value;
   inputState.interestType = el.interestType.value;
 }
 
@@ -174,11 +190,11 @@ el.birthDate.addEventListener("input", () => {
   });
 });
 
-// 第7章 7.5 数値入力：3桁区切り表示（カンマ自動整形）
+// 第7章 7.5 数値入力：3桁区切り表示（カンマ自動整形）、空欄の場合は自動的に0を設定する
 [el.initialAmount, el.monthlyAmount].forEach((input) => {
   input.addEventListener("blur", () => {
-    const n = toNumber(input.value);
-    if (n !== null && !Number.isNaN(n)) {
+    const n = toNumber(input.value) ?? 0;
+    if (!Number.isNaN(n)) {
       input.value = n.toLocaleString();
     }
   });
@@ -239,7 +255,9 @@ el.form.addEventListener("submit", (e) => {
   lastRunStartYearMonth = inputState.startYearMonth;
 
   // 第6章 6.4.6.1：運用方法に応じて税方式トグルの初期選択を自動決定する
-  displayState.selectedTaxType = inputState.interestType === "compound" ? "income" : "separate";
+  const autoTaxType = inputState.interestType === "compound" ? "income" : "separate";
+  displayState.selectedTaxType = autoTaxType;
+  displayState.lastConcreteTaxType = autoTaxType;
   updateTaxTypeToggleUI();
 
   renderResult();
@@ -255,20 +273,47 @@ el.taxTypeToggle.addEventListener("click", (e) => {
   const btn = e.target.closest(".toggle-btn");
   if (!btn) return;
   displayState.selectedTaxType = btn.dataset.taxType;
+  if (displayState.selectedTaxType !== "compare") {
+    displayState.lastConcreteTaxType = displayState.selectedTaxType;
+  }
   updateTaxTypeToggleUI();
   if (simulationResult) {
     renderTaxSection();
     renderYearlyTable(simulationResult.yearlyData);
-    renderAssetChart(el.assetChart, simulationResult.yearlyData, lastRunStartYearMonth, displayState.selectedTaxType);
+    renderAssetChart(el.assetChart, simulationResult.yearlyData, lastRunStartYearMonth, displayState.lastConcreteTaxType);
   }
 });
 
 function renderTaxSection() {
+  if (displayState.selectedTaxType === "compare") {
+    renderTaxCompareView();
+    return;
+  }
+  el.taxSingleView.hidden = false;
+  el.taxCompareView.hidden = true;
+
   const entry = simulationResult.taxComparison.find(
     (t) => t.taxType === displayState.selectedTaxType
   );
   el.resultTax.textContent = formatCurrency(entry.tax);
   el.resultAfterTax.textContent = formatCurrency(entry.afterTaxProfit);
+}
+
+// 第6章 6.4.6.2：税方式「比較」表示（差額＝源泉分離課税－一時所得に掛かる税金概算）
+function renderTaxCompareView() {
+  el.taxSingleView.hidden = true;
+  el.taxCompareView.hidden = false;
+
+  const sep = simulationResult.taxComparison.find((t) => t.taxType === "separate");
+  const inc = simulationResult.taxComparison.find((t) => t.taxType === "income");
+
+  el.compareTaxSeparate.textContent = formatCurrency(sep.tax);
+  el.compareTaxIncome.textContent = formatCurrency(inc.tax);
+  el.compareTaxDiff.textContent = formatSignedCurrency(sep.tax - inc.tax);
+
+  el.compareAfterTaxSeparate.textContent = formatCurrency(sep.afterTaxProfit);
+  el.compareAfterTaxIncome.textContent = formatCurrency(inc.afterTaxProfit);
+  el.compareAfterTaxDiff.textContent = formatSignedCurrency(sep.afterTaxProfit - inc.afterTaxProfit);
 }
 
 // ---- 結果表示（第6章 6.4.5、第11章 グラフ設計） ----
@@ -288,7 +333,7 @@ function renderResult() {
   el.disclaimerSection.hidden = false;
 
   renderTaxSection();
-  renderAssetChart(el.assetChart, yearlyData, lastRunStartYearMonth, displayState.selectedTaxType);
+  renderAssetChart(el.assetChart, yearlyData, lastRunStartYearMonth, displayState.lastConcreteTaxType);
   renderYearlyTable(yearlyData);
 
   scrollToResult();
@@ -311,7 +356,7 @@ function scrollToResult() {
 
 function renderYearlyTable(yearlyData) {
   el.yearlyTableBody.innerHTML = "";
-  const taxType = displayState.selectedTaxType;
+  const taxType = displayState.lastConcreteTaxType;
   yearlyData.forEach((row) => {
     const tax = taxType === "separate" ? row.taxSeparate : row.taxIncome;
     const afterTax = taxType === "separate" ? row.afterTaxSeparate : row.afterTaxIncome;
@@ -333,7 +378,7 @@ el.resetButton.addEventListener("click", () => {
   inputState = defaultInputState();
   derivedState = { maturityYearMonth: null, investmentMonths: null };
   simulationResult = null;
-  displayState = { selectedTaxType: "separate" };
+  displayState = { selectedTaxType: "separate", lastConcreteTaxType: "separate" };
   lastRunStartYearMonth = null;
 
   renderInputStateToDom();
@@ -345,6 +390,8 @@ el.resetButton.addEventListener("click", () => {
   el.graphSection.hidden = true;
   el.yearlySection.hidden = true;
   el.disclaimerSection.hidden = true;
+  el.taxSingleView.hidden = false;
+  el.taxCompareView.hidden = true;
 
   updateTaxTypeToggleUI();
 });
